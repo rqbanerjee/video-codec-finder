@@ -12,6 +12,14 @@ FILE_TYPES = ('.avi','.m4v', '.mkv', '.mp4')
 # as returned by mediainfo
 DEFAULT_SEARCH_FOR_CODEC = 'HEVC'
 
+def check_mediainfo():
+    retval = run("mediainfo --Output=JSON fake.mp4", capture_output=True, shell=True, text=True)
+    if 'command not found' in retval.stderr:
+        print("Missing dependency for mediainfo.")
+        print("See the readme: https://github.com/rqbanerjee/video-codec-finder/blob/main/README.md#dependencies")
+        exit(-1)
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Find files encoded with a specific video codec", 
                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -44,6 +52,7 @@ def find_matching_files(file_list, search_for_codec, verbose_logging):
             print("Analyzing " + filename)
         cmd = "mediainfo --Output=JSON \"{}\" ".format(filename)
         retval = run(cmd, capture_output=True, shell=True, text=True)
+        media_info_json = {}
         try:
             media_info_json = json.loads(retval.stdout)
         except json.decoder.JSONDecodeError as ex:
@@ -70,7 +79,8 @@ def find_matching_files(file_list, search_for_codec, verbose_logging):
 
     return matched
 
-
+#main
+check_mediainfo()
 config = parse_args()
 file_list = get_file_list(config['path_to_videos'])
 
